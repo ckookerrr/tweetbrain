@@ -16,7 +16,6 @@ export default function VoiceRecorder({ onTranscriptChange, transcript }: VoiceR
   const [state, setState] = useState<State>("idle")
   const [error, setError] = useState("")
   const [seconds, setSeconds] = useState(0)
-
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -25,13 +24,12 @@ export default function VoiceRecorder({ onTranscriptChange, transcript }: VoiceR
     setError("")
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mimeType = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg", "audio/mp4"]
-        .find((t) => MediaRecorder.isTypeSupported(t)) ?? ""
+      const mimeType = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg", "audio/mp4"].find(t => MediaRecorder.isTypeSupported(t)) ?? ""
       const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
       chunksRef.current = []
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data) }
       recorder.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop())
+        stream.getTracks().forEach(t => t.stop())
         clearInterval(timerRef.current!)
         setSeconds(0)
         await transcribeAudio(recorder.mimeType || mimeType || "audio/webm")
@@ -40,25 +38,18 @@ export default function VoiceRecorder({ onTranscriptChange, transcript }: VoiceR
       mediaRecorderRef.current = recorder
       setState("recording")
       setSeconds(0)
-      timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000)
+      timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000)
     } catch {
       setError(tr.micDenied)
     }
   }
 
-  const stopRecording = () => {
-    mediaRecorderRef.current?.stop()
-    setState("transcribing")
-  }
+  const stopRecording = () => { mediaRecorderRef.current?.stop(); setState("transcribing") }
 
   const transcribeAudio = async (mimeType: string) => {
     const blob = new Blob(chunksRef.current, { type: mimeType })
     try {
-      const res = await fetch("/api/transcribe", {
-        method: "POST",
-        headers: { "Content-Type": mimeType },
-        body: blob,
-      })
+      const res = await fetch("/api/transcribe", { method: "POST", headers: { "Content-Type": mimeType }, body: blob })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       const newText = data.transcript as string
@@ -70,53 +61,62 @@ export default function VoiceRecorder({ onTranscriptChange, transcript }: VoiceR
     }
   }
 
-  const formatTime = (s: number) =>
-    `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`
+  const formatTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-center">
+      {/* Record button */}
+      <div className="flex items-center gap-4">
         <button
           onClick={state === "recording" ? stopRecording : startRecording}
           disabled={state === "transcribing"}
-          className={`relative w-28 h-28 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
-            state === "recording"
-              ? "bg-red-500 hover:bg-red-600 scale-110 shadow-red-500/40"
-              : "bg-violet-600 hover:bg-violet-700 shadow-violet-500/30"
-          }`}
+          className="relative w-14 h-14 rounded-full flex items-center justify-center transition-all"
+          style={{
+            background: state === "recording" ? "#f4212e" : "#1d9bf0",
+            opacity: state === "transcribing" ? 0.5 : 1,
+            boxShadow: state === "recording" ? "0 0 0 0 rgba(244,33,46,0.4)" : "none",
+          }}
         >
           {state === "recording" && (
-            <span className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-30" />
+            <span className="absolute inset-0 rounded-full animate-ping" style={{ background: "rgba(244,33,46,0.3)" }} />
           )}
           {state === "transcribing" ? (
-            <Loader2 className="w-10 h-10 text-white animate-spin" />
+            <Loader2 className="w-6 h-6 text-white animate-spin" />
           ) : state === "recording" ? (
-            <Square className="w-10 h-10 text-white" fill="white" />
+            <Square className="w-5 h-5 text-white" fill="white" />
           ) : (
-            <Mic className="w-10 h-10 text-white" />
+            <Mic className="w-6 h-6 text-white" />
           )}
         </button>
+
+        <div className="flex-1">
+          {state === "recording" && (
+            <div>
+              <p className="text-sm font-mono font-bold" style={{ color: "#f4212e" }}>{formatTime(seconds)}</p>
+              <p className="text-xs" style={{ color: "#71767b" }}>{tr.tapToStop}</p>
+            </div>
+          )}
+          {state === "transcribing" && <p className="text-sm" style={{ color: "#1d9bf0" }}>{tr.transcribing}</p>}
+          {state === "idle" && <p className="text-sm" style={{ color: "#71767b" }}>{tr.tapToRecord}</p>}
+        </div>
       </div>
 
-      <p className="text-center text-sm text-zinc-400">
-        {state === "recording" && (
-          <span className="text-red-400 font-mono">{formatTime(seconds)} · {tr.tapToStop}</span>
-        )}
-        {state === "transcribing" && <span className="text-violet-400">{tr.transcribing}</span>}
-        {state === "idle" && tr.tapToRecord}
-      </p>
+      {error && <p className="text-sm" style={{ color: "#f4212e" }}>{error}</p>}
 
-      {error && <p className="text-sm text-red-400 text-center">{error}</p>}
-
-      <div className="space-y-1">
-        <label className="text-xs text-zinc-500 uppercase tracking-wider">
-          {tr.transcriptLabel} {transcript && `· ${transcript.length} chars`}
-        </label>
+      {/* Transcript */}
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#71767b" }}>
+          {tr.transcriptLabel} {transcript && `· ${transcript.length}`}
+        </p>
         <textarea
           value={transcript}
           onChange={(e) => onTranscriptChange(e.target.value)}
           placeholder={tr.transcriptPlaceholder}
-          className="w-full h-36 bg-zinc-800 text-white rounded-xl p-4 resize-none focus:outline-none focus:ring-2 focus:ring-violet-500 placeholder-zinc-500 text-sm"
+          rows={4}
+          className="w-full rounded-2xl p-3 resize-none focus:outline-none text-sm border"
+          style={{ background: "#000", color: "#e7e9ea", borderColor: "#2f3336", caretColor: "#1d9bf0" }}
+          onFocus={(e) => (e.target.style.borderColor = "#1d9bf0")}
+          onBlur={(e) => (e.target.style.borderColor = "#2f3336")}
         />
       </div>
     </div>

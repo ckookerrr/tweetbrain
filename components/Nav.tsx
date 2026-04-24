@@ -16,20 +16,27 @@ export default function Nav() {
   ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-zinc-900/95 backdrop-blur border-t border-zinc-800 z-50">
-      <div className="max-w-lg mx-auto flex" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50"
+      style={{
+        background: "rgba(0,0,0,0.9)",
+        backdropFilter: "blur(12px)",
+        borderTop: "1px solid #2f3336",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
+    >
+      <div className="max-w-[600px] mx-auto flex">
         {links.map(({ href, label, icon: Icon }) => {
           const active = pathname === href
           return (
             <Link
               key={href}
               href={href}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors ${
-                active ? "text-violet-400" : "text-zinc-500 hover:text-zinc-300"
-              }`}
+              className="flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors"
+              style={{ color: active ? "#1d9bf0" : "#71767b" }}
             >
-              <Icon className="w-5 h-5" />
-              {label}
+              <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 2} />
+              <span className="font-medium">{label}</span>
             </Link>
           )
         })}

@@ -28,47 +28,46 @@ export default function StyleMemory({ onStyleChange }: StyleMemoryProps) {
     setTimeout(() => setSaved(false), 2000)
   }
 
-  const handleClear = () => {
-    setInput("")
-    saveUserStyle("")
-    onStyleChange("")
-  }
-
   return (
     <div>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 text-sm text-zinc-400 hover:text-violet-400 transition-colors"
+        className="flex items-center gap-1.5 text-sm font-medium transition-colors"
+        style={{ color: getUserStyle() ? "#1d9bf0" : "#71767b" }}
       >
         <Brain className="w-4 h-4" />
         {tr.myStyle}
-        {getUserStyle() && <span className="w-2 h-2 rounded-full bg-violet-500 inline-block" />}
       </button>
 
       {open && (
-        <div className="mt-3 space-y-2">
-          <p className="text-xs text-zinc-500">{tr.styleHint}</p>
+        <div className="absolute right-4 mt-2 w-72 rounded-2xl border p-4 space-y-3 z-50" style={{ background: "#16181c", borderColor: "#2f3336" }}>
+          <p className="text-xs" style={{ color: "#71767b" }}>{tr.styleHint}</p>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={tr.stylePlaceholder}
-            className="w-full h-32 bg-zinc-800 text-white rounded-xl p-3 resize-none focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm placeholder-zinc-600"
+            rows={5}
+            className="w-full rounded-xl p-3 resize-none focus:outline-none text-sm border"
+            style={{ background: "#000", color: "#e7e9ea", borderColor: "#2f3336" }}
+            onFocus={(e) => (e.target.style.borderColor = "#1d9bf0")}
+            onBlur={(e) => (e.target.style.borderColor = "#2f3336")}
           />
           <div className="flex gap-2">
             <button
               onClick={handleSave}
-              className="flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg px-3 py-1.5 text-sm transition-colors"
+              className="flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold"
+              style={{ background: "#1d9bf0", color: "#fff" }}
             >
               <Save className="w-3.5 h-3.5" />
               {saved ? tr.saved : tr.saveStyle}
             </button>
             {input && (
               <button
-                onClick={handleClear}
-                className="flex items-center gap-1.5 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg px-3 py-1.5 text-sm transition-colors"
+                onClick={() => { setInput(""); saveUserStyle(""); onStyleChange("") }}
+                className="flex items-center gap-1.5 rounded-full px-3 py-2 text-sm border"
+                style={{ borderColor: "#2f3336", color: "#71767b" }}
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                Clear
               </button>
             )}
           </div>

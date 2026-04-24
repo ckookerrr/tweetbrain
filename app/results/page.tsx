@@ -13,7 +13,7 @@ export default function ResultsPage() {
   const router = useRouter()
   const { tr } = useLang()
   const [posts, setPosts] = useState<GeneratedPosts | null>(null)
-  const [photos, setPhotos] = useState<string[]>([])
+  const [photos] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState<TabKey>("short")
   const [copied, setCopied] = useState(false)
 
@@ -27,15 +27,14 @@ export default function ResultsPage() {
   useEffect(() => {
     const raw = sessionStorage.getItem("tweetbrain_current")
     if (!raw) { router.push("/"); return }
-    const { posts: p, photos: ph } = JSON.parse(raw)
+    const { posts: p } = JSON.parse(raw)
     setPosts(p)
-    setPhotos(ph || [])
   }, [router])
 
   if (!posts) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#2f3336", borderTopColor: "#1d9bf0" }} />
       </div>
     )
   }
@@ -44,22 +43,19 @@ export default function ResultsPage() {
     const lines: string[] = []
     lines.push(tr.allShortLabel)
     lines.push(posts.short.content)
-    if (posts.short.hashtags.length) lines.push(posts.short.hashtags.map((h) => `#${h}`).join(" "))
+    if (posts.short.hashtags.length) lines.push(posts.short.hashtags.map(h => `#${h}`).join(" "))
     lines.push("")
     lines.push(tr.allBoldLabel)
     lines.push(posts.provocative.content)
-    if (posts.provocative.hashtags.length) lines.push(posts.provocative.hashtags.map((h) => `#${h}`).join(" "))
+    if (posts.provocative.hashtags.length) lines.push(posts.provocative.hashtags.map(h => `#${h}`).join(" "))
     lines.push("")
     lines.push(tr.allThreadLabel)
-    posts.thread.tweets.forEach((t) => lines.push(t))
-    if (posts.thread.hashtags.length) lines.push(posts.thread.hashtags.map((h) => `#${h}`).join(" "))
+    posts.thread.tweets.forEach(t => lines.push(t))
+    if (posts.thread.hashtags.length) lines.push(posts.thread.hashtags.map(h => `#${h}`).join(" "))
     return lines.join("\n")
   }
 
-  const activeVariant =
-    activeTab === "thread" ? posts.thread
-    : activeTab === "short" ? posts.short
-    : posts.provocative
+  const activeVariant = activeTab === "thread" ? posts.thread : activeTab === "short" ? posts.short : posts.provocative
 
   const copyAll = async () => {
     await navigator.clipboard.writeText(buildAllText())
@@ -68,49 +64,54 @@ export default function ResultsPage() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => router.push("/")}
-          className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
+    <div>
+      {/* Header */}
+      <header className="sticky top-0 z-40 flex items-center gap-3 px-4 py-3 border-b" style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", borderColor: "#2f3336" }}>
+        <button onClick={() => router.push("/")} className="p-2 rounded-full transition-colors" style={{ color: "#e7e9ea" }}>
+          <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-xl font-bold">{tr.generatedPosts}</h1>
-      </div>
+        <h1 className="font-bold text-lg" style={{ color: "#e7e9ea" }}>{tr.generatedPosts}</h1>
+      </header>
 
-      <div className="flex gap-1 bg-zinc-800/60 rounded-xl p-1">
+      {/* Tabs */}
+      <div className="flex border-b" style={{ borderColor: "#2f3336" }}>
         {TABS.map(({ key, label }) => (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === key ? "bg-violet-600 text-white" : "text-zinc-400 hover:text-white"
-            }`}
+            className="flex-1 py-4 text-sm font-semibold transition-colors relative"
+            style={{ color: activeTab === key ? "#e7e9ea" : "#71767b" }}
           >
             {label}
+            {activeTab === key && (
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-8 rounded-full" style={{ background: "#1d9bf0" }} />
+            )}
           </button>
         ))}
       </div>
 
-      {activeTab === "all" ? (
-        <div className="space-y-3">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-            <pre className="text-sm text-white whitespace-pre-wrap leading-relaxed font-sans">
-              {buildAllText()}
-            </pre>
+      {/* Content */}
+      <div className="px-4 py-4">
+        {activeTab === "all" ? (
+          <div className="space-y-3">
+            <div className="rounded-2xl p-4 border" style={{ background: "#16181c", borderColor: "#2f3336" }}>
+              <pre className="text-sm whitespace-pre-wrap leading-relaxed font-sans" style={{ color: "#e7e9ea" }}>
+                {buildAllText()}
+              </pre>
+            </div>
+            <button
+              onClick={copyAll}
+              className="w-full flex items-center justify-center gap-2 font-bold rounded-full py-3 text-sm"
+              style={{ background: "#1d9bf0", color: "#fff" }}
+            >
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {copied ? tr.copiedAll : tr.copyAll}
+            </button>
           </div>
-          <button
-            onClick={copyAll}
-            className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl py-3 text-sm font-medium transition-colors"
-          >
-            {copied ? <Check className="w-4 h-4 text-green-300" /> : <Copy className="w-4 h-4" />}
-            {copied ? tr.copiedAll : tr.copyAll}
-          </button>
-        </div>
-      ) : (
-        <PostCard type={activeTab} variant={activeVariant} photos={photos} />
-      )}
+        ) : (
+          <PostCard type={activeTab} variant={activeVariant} photos={photos} />
+        )}
+      </div>
     </div>
   )
 }

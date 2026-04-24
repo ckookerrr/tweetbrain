@@ -21,27 +21,13 @@ export default function PhotoUpload({ photos, onPhotosChange }: PhotoUploadProps
       reader.readAsDataURL(file)
     })
 
-  const addFiles = useCallback(
-    async (files: FileList | File[]) => {
-      const remaining = 20 - photos.length
-      const toProcess = Array.from(files).slice(0, remaining)
-      const base64s = await Promise.all(toProcess.map(readFile))
-      onPhotosChange([...photos, ...base64s])
-    },
-    [photos, onPhotosChange]
-  )
+  const addFiles = useCallback(async (files: FileList | File[]) => {
+    const remaining = 20 - photos.length
+    const base64s = await Promise.all(Array.from(files).slice(0, remaining).map(readFile))
+    onPhotosChange([...photos, ...base64s])
+  }, [photos, onPhotosChange])
 
-  const onDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      addFiles(e.dataTransfer.files)
-    },
-    [addFiles]
-  )
-
-  const removePhoto = (index: number) => {
-    onPhotosChange(photos.filter((_, i) => i !== index))
-  }
+  const onDrop = useCallback((e: React.DragEvent) => { e.preventDefault(); addFiles(e.dataTransfer.files) }, [addFiles])
 
   return (
     <div className="space-y-3">
@@ -49,41 +35,30 @@ export default function PhotoUpload({ photos, onPhotosChange }: PhotoUploadProps
         onDrop={onDrop}
         onDragOver={(e) => e.preventDefault()}
         onClick={() => inputRef.current?.click()}
-        className="border-2 border-dashed border-zinc-700 hover:border-violet-500 rounded-xl p-6 text-center cursor-pointer transition-colors group"
+        className="flex items-center gap-3 rounded-2xl p-3 cursor-pointer border transition-all"
+        style={{ borderColor: "#2f3336", background: "#16181c" }}
       >
-        <ImagePlus className="w-8 h-8 mx-auto mb-2 text-zinc-500 group-hover:text-violet-400 transition-colors" />
-        <p className="text-sm text-zinc-400 group-hover:text-zinc-300 transition-colors">
-          {tr.photoDropHint}
-        </p>
-        <p className="text-xs text-zinc-600 mt-1">{photos.length}/20</p>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          onChange={(e) => e.target.files && addFiles(e.target.files)}
-        />
+        <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(29,155,240,0.1)" }}>
+          <ImagePlus className="w-4 h-4" style={{ color: "#1d9bf0" }} />
+        </div>
+        <p className="text-sm" style={{ color: "#71767b" }}>{tr.photoDropHint}</p>
+        <span className="ml-auto text-xs font-semibold" style={{ color: "#1d9bf0" }}>{photos.length}/20</span>
+        <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => e.target.files && addFiles(e.target.files)} />
       </div>
 
       {photos.length > 0 && (
         <div className="grid grid-cols-4 gap-2">
           {photos.map((b64, i) => (
             <div key={i} className="relative group aspect-square">
-              <img
-                src={`data:image/jpeg;base64,${b64}`}
-                alt={`Photo ${i + 1}`}
-                className="w-full h-full object-cover rounded-lg"
-              />
+              <img src={`data:image/jpeg;base64,${b64}`} alt="" className="w-full h-full object-cover rounded-xl" />
               <button
-                onClick={() => removePhoto(i)}
-                className="absolute top-1 right-1 bg-black/60 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => onPhotosChange(photos.filter((_, j) => j !== i))}
+                className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(0,0,0,0.7)" }}
               >
                 <X className="w-3 h-3 text-white" />
               </button>
-              <span className="absolute bottom-1 left-1 bg-black/60 text-white text-xs px-1 rounded">
-                {i}
-              </span>
+              <span className="absolute bottom-1 left-1 text-xs px-1 rounded" style={{ background: "rgba(0,0,0,0.7)", color: "#fff" }}>{i}</span>
             </div>
           ))}
         </div>
