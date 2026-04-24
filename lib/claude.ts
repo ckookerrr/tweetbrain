@@ -1,7 +1,7 @@
 import type { GeneratedPosts } from "./types"
 
 const OPENROUTER_BASE = "https://openrouter.ai/api/v1"
-const MODEL = "google/gemini-2.0-flash-lite-001"
+const MODEL = "google/gemini-2.5-flash"
 
 const SYSTEM_PROMPT = `You are a Twitter ghostwriter. You receive a raw voice transcript (with filler words, repetitions, incomplete thoughts) and a set of photos from a blogger's day.
 
@@ -75,38 +75,50 @@ export async function generatePosts(
 
   userContent.push({ type: "text", text: `Voice transcript:\n${transcript}` })
 
-  const res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      "HTTP-Referer": "https://tweetbrain.local",
-      "X-Title": "TweetBrain",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 4096,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userContent },
-      ],
-    }),
-  })
+  const call = async () => {
+    const res = await fetch(`${OPENROUTER_BASE}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "HTTP-Referer": "https://tweetbrain.local",
+        "X-Title": "TweetBrain",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 4096,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent },
+        ],
+      }),
+    })
 
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`OpenRouter error ${res.status}: ${err.slice(0, 200)}`)
+    if (!res.ok) {
+      const err = await res.text()
+      throw new Error(`OpenRouter error ${res.status}: ${err.slice(0, 200)}`)
+    }
+
+    const data = await res.json()
+    const text: string = data.choices?.[0]?.message?.content ?? ""
+    const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim()
+
+    try {
+      return JSON.parse(cleaned) as GeneratedPosts
+    } catch {
+      throw new Error(`Failed to parse model response: ${text.slice(0, 300)}`)
+    }
   }
 
-  const data = await res.json()
-  const text: string = data.choices?.[0]?.message?.content ?? ""
-
-  // Strip potential markdown code fences
-  const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim()
-
+  // Retry once on failure
   try {
-    return JSON.parse(cleaned) as GeneratedPosts
-  } catch {
-    throw new Error(`Failed to parse model response: ${text.slice(0, 200)}`)
+    return await call()
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : ""
+    if (msg.includes("504") || msg.includes("aborted") || msg.includes("parse")) {
+      return await call()
+    }
+    throw e
   }
 }
