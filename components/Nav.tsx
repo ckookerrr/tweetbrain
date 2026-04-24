@@ -2,16 +2,18 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Mic, FileText, Inbox, List } from "lucide-react"
-
-const links = [
-  { href: "/", label: "Record", icon: Mic },
-  { href: "/drafts", label: "Drafts", icon: FileText },
-  { href: "/queue", label: "Queue", icon: List },
-]
+import { Mic, FileText, List } from "lucide-react"
+import { useLang } from "@/lib/lang-context"
 
 export default function Nav() {
   const pathname = usePathname()
+  const { tr } = useLang()
+
+  const links = [
+    { href: "/", label: tr.navRecord, icon: Mic },
+    { href: "/drafts", label: tr.navDrafts, icon: FileText },
+    { href: "/queue", label: tr.navQueue, icon: List },
+  ]
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-zinc-900/95 backdrop-blur border-t border-zinc-800 z-50">

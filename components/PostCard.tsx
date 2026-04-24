@@ -5,6 +5,7 @@ import { Copy, Check, Bookmark, Clock } from "lucide-react"
 import HookAlternatives from "./HookAlternatives"
 import type { PostVariant, ThreadVariant, QueueEntry } from "@/lib/types"
 import { saveToQueue } from "@/lib/storage"
+import { useLang } from "@/lib/lang-context"
 
 type Variant = PostVariant | ThreadVariant
 
@@ -25,14 +26,12 @@ const TIME_EMOJIS: Record<string, string> = {
 }
 
 export default function PostCard({ type, variant, photos }: PostCardProps) {
+  const { tr } = useLang()
   const [copied, setCopied] = useState(false)
   const [saved, setSaved] = useState(false)
   const [displayContent, setDisplayContent] = useState<string | null>(null)
 
-  const mainText = isThread(variant)
-    ? variant.tweets.join("\n\n")
-    : variant.content
-
+  const mainText = isThread(variant) ? variant.tweets.join("\n\n") : variant.content
   const currentText = displayContent ?? mainText
 
   const copyText = async () => {
@@ -58,14 +57,19 @@ export default function PostCard({ type, variant, photos }: PostCardProps) {
   const handleHookSelect = (hook: string) => {
     if (isThread(variant)) {
       const tweets = [...variant.tweets]
-      const first = tweets[0]
-      const nSlash = first.match(/^\d+\/\d+\s/)?.[0] ?? ""
+      const nSlash = tweets[0].match(/^\d+\/\d+\s/)?.[0] ?? ""
       tweets[0] = nSlash + hook
       setDisplayContent(tweets.join("\n\n"))
     } else {
       setDisplayContent(hook)
     }
   }
+
+  const timeLabel = variant.best_time === "morning"
+    ? tr.morning
+    : variant.best_time === "lunch"
+    ? tr.lunch
+    : tr.evening
 
   return (
     <div className="space-y-4">
@@ -91,37 +95,23 @@ export default function PostCard({ type, variant, photos }: PostCardProps) {
       <div className="bg-zinc-800 rounded-xl p-4 space-y-3">
         {isThread(variant) ? (
           <div className="space-y-3">
-            {(displayContent ? displayContent.split("\n\n") : variant.tweets).map(
-              (tweet, i) => (
-                <div key={i} className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-xs font-bold shrink-0">
-                    {i + 1}
-                  </div>
-                  <p className="text-white text-sm leading-relaxed pt-1">{tweet}</p>
+            {(displayContent ? displayContent.split("\n\n") : variant.tweets).map((tweet, i) => (
+              <div key={i} className="flex gap-3">
+                <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-xs font-bold shrink-0">
+                  {i + 1}
                 </div>
-              )
-            )}
+                <p className="text-white text-sm leading-relaxed pt-1">{tweet}</p>
+              </div>
+            ))}
           </div>
         ) : (
           <p className="text-white leading-relaxed">{currentText}</p>
-        )}
-
-        {!isThread(variant) && (
-          <p className="text-right text-xs text-zinc-500">
-            {currentText.length}/280
-            {currentText.length > 280 && (
-              <span className="text-red-400 ml-1">Over limit!</span>
-            )}
-          </p>
         )}
       </div>
 
       <div className="flex flex-wrap gap-2">
         {variant.hashtags.map((tag) => (
-          <span
-            key={tag}
-            className="bg-zinc-800 text-violet-400 text-xs px-2 py-1 rounded-full"
-          >
+          <span key={tag} className="bg-zinc-800 text-violet-400 text-xs px-2 py-1 rounded-full">
             #{tag}
           </span>
         ))}
@@ -130,9 +120,7 @@ export default function PostCard({ type, variant, photos }: PostCardProps) {
       <div className="flex items-center gap-2 text-xs text-zinc-400">
         <Clock className="w-3 h-3" />
         <span>
-          {TIME_EMOJIS[variant.best_time] ?? "⏰"}{" "}
-          <span className="capitalize">{variant.best_time}</span> —{" "}
-          {variant.best_time_reason}
+          {TIME_EMOJIS[variant.best_time] ?? "⏰"} {timeLabel} — {variant.best_time_reason}
         </span>
       </div>
 
@@ -144,14 +132,14 @@ export default function PostCard({ type, variant, photos }: PostCardProps) {
           className="flex-1 flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg py-2.5 text-sm font-medium transition-colors"
         >
           {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-          {copied ? "Copied!" : "Copy"}
+          {copied ? tr.copied : tr.copy}
         </button>
         <button
           onClick={saveForLater}
           className="flex items-center justify-center gap-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg px-4 py-2.5 text-sm transition-colors"
         >
           {saved ? <Check className="w-4 h-4 text-green-400" /> : <Bookmark className="w-4 h-4" />}
-          {saved ? "Saved!" : "Save"}
+          {saved ? tr.saved : tr.save}
         </button>
       </div>
     </div>

@@ -4,12 +4,7 @@ import { useState, useEffect } from "react"
 import { Copy, Trash2, GripVertical, List, Check } from "lucide-react"
 import { getQueue, updateQueue, removeFromQueue } from "@/lib/storage"
 import type { QueueEntry } from "@/lib/types"
-
-const TYPE_LABEL: Record<string, string> = {
-  short: "Short",
-  thread: "Thread",
-  provocative: "Bold",
-}
+import { useLang } from "@/lib/lang-context"
 
 const TYPE_COLOR: Record<string, string> = {
   short: "bg-blue-900/40 text-blue-300",
@@ -18,13 +13,18 @@ const TYPE_COLOR: Record<string, string> = {
 }
 
 export default function QueuePage() {
+  const { tr } = useLang()
   const [queue, setQueue] = useState<QueueEntry[]>([])
   const [dragging, setDragging] = useState<number | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
 
-  useEffect(() => {
-    setQueue(getQueue())
-  }, [])
+  const TYPE_LABEL: Record<string, string> = {
+    short: tr.tabShort,
+    thread: tr.tabThread,
+    provocative: tr.tabBold,
+  }
+
+  useEffect(() => { setQueue(getQueue()) }, [])
 
   const copyItem = async (entry: QueueEntry) => {
     const text = entry.content + "\n\n" + entry.hashtags.map((h) => `#${h}`).join(" ")
@@ -56,10 +56,10 @@ export default function QueuePage() {
   if (queue.length === 0) {
     return (
       <div className="space-y-4">
-        <h1 className="text-xl font-bold">Queue</h1>
+        <h1 className="text-xl font-bold">{tr.queue}</h1>
         <div className="flex flex-col items-center justify-center h-48 text-zinc-500 space-y-2">
           <List className="w-10 h-10 opacity-30" />
-          <p className="text-sm">No posts queued. Save some posts for later!</p>
+          <p className="text-sm">{tr.noQueue}</p>
         </div>
       </div>
     )
@@ -68,8 +68,8 @@ export default function QueuePage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Queue</h1>
-        <span className="text-sm text-zinc-500">{queue.length} queued</span>
+        <h1 className="text-xl font-bold">{tr.queue}</h1>
+        <span className="text-sm text-zinc-500">{queue.length} {tr.queued}</span>
       </div>
 
       <div className="space-y-2">
@@ -88,23 +88,17 @@ export default function QueuePage() {
               <GripVertical className="w-4 h-4 text-zinc-600 mt-1 shrink-0" />
               <div className="flex-1 min-w-0 space-y-2">
                 <div className="flex items-center gap-2">
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full ${TYPE_COLOR[entry.type] ?? ""}`}
-                  >
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${TYPE_COLOR[entry.type] ?? ""}`}>
                     {TYPE_LABEL[entry.type]}
                   </span>
                   <span className="text-xs text-zinc-600">
                     {new Date(entry.savedAt).toLocaleDateString()}
                   </span>
                 </div>
-                <p className="text-white text-sm leading-relaxed line-clamp-3">
-                  {entry.content}
-                </p>
+                <p className="text-white text-sm leading-relaxed line-clamp-3">{entry.content}</p>
                 <div className="flex flex-wrap gap-1">
                   {entry.hashtags.map((h) => (
-                    <span key={h} className="text-xs text-violet-400">
-                      #{h}
-                    </span>
+                    <span key={h} className="text-xs text-violet-400">#{h}</span>
                   ))}
                 </div>
               </div>
@@ -115,12 +109,8 @@ export default function QueuePage() {
                 onClick={() => copyItem(entry)}
                 className="flex-1 flex items-center justify-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-sm text-white rounded-lg py-2 transition-colors"
               >
-                {copied === entry.id ? (
-                  <Check className="w-3.5 h-3.5 text-green-400" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5" />
-                )}
-                {copied === entry.id ? "Copied!" : "Copy"}
+                {copied === entry.id ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied === entry.id ? tr.copied : tr.copy}
               </button>
               <button
                 onClick={() => removeItem(entry.id)}

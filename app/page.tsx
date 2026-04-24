@@ -8,44 +8,39 @@ import PhotoUpload from "@/components/PhotoUpload"
 import StyleMemory from "@/components/StyleMemory"
 import type { GeneratedPosts } from "@/lib/types"
 import { saveDraft } from "@/lib/storage"
+import { useLang } from "@/lib/lang-context"
 
 export default function Home() {
   const router = useRouter()
+  const { lang, setLang, tr } = useLang()
   const [transcript, setTranscript] = useState("")
   const [photos, setPhotos] = useState<string[]>([])
   const [userStyle, setUserStyle] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [progress, setProgress] = useState("")
 
   const handleGenerate = async () => {
     if (!transcript.trim()) {
-      setError("Please add a voice recording or type your ideas first.")
+      setError(tr.errorNoTranscript)
       return
     }
 
     setError("")
     setLoading(true)
-    setProgress("Sending to Claude...")
 
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript, images: photos, userStyle }),
+        body: JSON.stringify({ transcript, images: photos, userStyle, lang }),
       })
 
-      setProgress("Processing response...")
       const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error || "Generation failed")
-      }
+      if (!res.ok) throw new Error(data.error || tr.errorGeneral)
 
       const posts = data as GeneratedPosts
       const draft = saveDraft(transcript, photos.length, posts)
 
-      // Store only posts (no photos) to avoid sessionStorage quota errors with large images
       try {
         sessionStorage.setItem("tweetbrain_current", JSON.stringify({ posts, photos: [], draftId: draft.id }))
       } catch {
@@ -53,10 +48,9 @@ export default function Home() {
       }
       router.push("/results")
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.")
+      setError(e instanceof Error ? e.message : tr.errorGeneral)
     } finally {
       setLoading(false)
-      setProgress("")
     }
   }
 
@@ -65,21 +59,42 @@ export default function Home() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">TweetBrain</h1>
-          <p className="text-sm text-zinc-400">Record your thoughts, get great tweets</p>
+          <p className="text-sm text-zinc-400">{tr.appSubtitle}</p>
         </div>
-        <StyleMemory onStyleChange={setUserStyle} />
+        <div className="flex items-center gap-2">
+          {/* Lang switcher */}
+          <div className="flex bg-zinc-800 rounded-lg p-0.5 text-xs font-semibold">
+            <button
+              onClick={() => setLang("ru")}
+              className={`px-2.5 py-1 rounded-md transition-colors ${
+                lang === "ru" ? "bg-violet-600 text-white" : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              RU
+            </button>
+            <button
+              onClick={() => setLang("en")}
+              className={`px-2.5 py-1 rounded-md transition-colors ${
+                lang === "en" ? "bg-violet-600 text-white" : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              EN
+            </button>
+          </div>
+          <StyleMemory onStyleChange={setUserStyle} />
+        </div>
       </div>
 
       <section className="space-y-2">
         <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
-          1. Your Voice
+          {tr.sectionVoice}
         </h2>
         <VoiceRecorder transcript={transcript} onTranscriptChange={setTranscript} />
       </section>
 
       <section className="space-y-2">
         <h2 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">
-          2. Photos (optional)
+          {tr.sectionPhotos}
         </h2>
         <PhotoUpload photos={photos} onPhotosChange={setPhotos} />
       </section>
@@ -99,12 +114,12 @@ export default function Home() {
         {loading ? (
           <>
             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            {progress}
+            {tr.generating}
           </>
         ) : (
           <>
             <Sparkles className="w-5 h-5" />
-            Generate Posts
+            {tr.generateBtn}
           </>
         )}
       </button>

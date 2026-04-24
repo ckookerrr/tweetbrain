@@ -56,11 +56,16 @@ type OAIContent =
 export async function generatePosts(
   transcript: string,
   images: string[],
-  userStyle?: string
+  userStyle?: string,
+  lang: "ru" | "en" = "ru"
 ): Promise<GeneratedPosts> {
-  const systemPrompt = userStyle
+  const langInstruction = lang === "ru"
+    ? "\n\nIMPORTANT: Write ALL post content, hashtags, hook_alternatives, and best_time_reason in RUSSIAN language."
+    : "\n\nWrite all content in English."
+
+  const systemPrompt = (userStyle
     ? `${SYSTEM_PROMPT}\n\nUser's writing style (match this tone):\n${userStyle}`
-    : SYSTEM_PROMPT
+    : SYSTEM_PROMPT) + langInstruction
 
   const userContent: OAIContent[] = []
 

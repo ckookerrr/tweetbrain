@@ -3,6 +3,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import Nav from "@/components/Nav"
 import RegisterSW from "@/components/RegisterSW"
+import { LangProvider } from "@/lib/lang-context"
 
 const inter = Inter({ subsets: ["latin", "cyrillic"] })
 
@@ -29,22 +30,20 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru">
       <body className={`${inter.className} bg-zinc-950 text-white min-h-screen`}>
-        <main
-          className="max-w-lg mx-auto px-4 pb-24"
-          style={{ paddingTop: "max(1.5rem, env(safe-area-inset-top))" }}
-        >
-          {children}
-        </main>
-        <Nav />
-        <RegisterSW />
+        <LangProvider>
+          <main
+            className="max-w-lg mx-auto px-4 pb-24"
+            style={{ paddingTop: "max(1.5rem, env(safe-area-inset-top))" }}
+          >
+            {children}
+          </main>
+          <Nav />
+          <RegisterSW />
+        </LangProvider>
       </body>
     </html>
   )

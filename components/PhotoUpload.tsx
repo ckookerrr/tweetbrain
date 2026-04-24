@@ -2,6 +2,7 @@
 
 import { useCallback, useRef } from "react"
 import { ImagePlus, X } from "lucide-react"
+import { useLang } from "@/lib/lang-context"
 
 interface PhotoUploadProps {
   photos: string[]
@@ -9,6 +10,7 @@ interface PhotoUploadProps {
 }
 
 export default function PhotoUpload({ photos, onPhotosChange }: PhotoUploadProps) {
+  const { tr } = useLang()
   const inputRef = useRef<HTMLInputElement>(null)
 
   const readFile = (file: File): Promise<string> =>
@@ -51,9 +53,9 @@ export default function PhotoUpload({ photos, onPhotosChange }: PhotoUploadProps
       >
         <ImagePlus className="w-8 h-8 mx-auto mb-2 text-zinc-500 group-hover:text-violet-400 transition-colors" />
         <p className="text-sm text-zinc-400 group-hover:text-zinc-300 transition-colors">
-          Drag & drop or tap to add photos
+          {tr.photoDropHint}
         </p>
-        <p className="text-xs text-zinc-600 mt-1">{photos.length}/20 photos</p>
+        <p className="text-xs text-zinc-600 mt-1">{photos.length}/20</p>
         <input
           ref={inputRef}
           type="file"

@@ -3,7 +3,7 @@ import { generatePosts } from "@/lib/claude"
 
 export async function POST(req: NextRequest) {
   try {
-    const { transcript, images, userStyle } = await req.json()
+    const { transcript, images, userStyle, lang } = await req.json()
 
     if (!transcript || typeof transcript !== "string") {
       return NextResponse.json({ error: "transcript is required" }, { status: 400 })
@@ -12,7 +12,8 @@ export async function POST(req: NextRequest) {
     const posts = await generatePosts(
       transcript,
       Array.isArray(images) ? images : [],
-      userStyle
+      userStyle,
+      lang ?? "ru"
     )
 
     return NextResponse.json(posts)
