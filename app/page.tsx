@@ -45,7 +45,12 @@ export default function Home() {
       const posts = data as GeneratedPosts
       const draft = saveDraft(transcript, photos.length, posts)
 
-      sessionStorage.setItem("tweetbrain_current", JSON.stringify({ posts, photos, draftId: draft.id }))
+      // Store only posts (no photos) to avoid sessionStorage quota errors with large images
+      try {
+        sessionStorage.setItem("tweetbrain_current", JSON.stringify({ posts, photos: [], draftId: draft.id }))
+      } catch {
+        sessionStorage.setItem("tweetbrain_current", JSON.stringify({ posts, photos: [], draftId: draft.id }))
+      }
       router.push("/results")
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong. Please try again.")
