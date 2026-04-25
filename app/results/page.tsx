@@ -7,6 +7,7 @@ import type { GeneratedPosts, QueueEntry } from "@/lib/types"
 import { saveToQueue } from "@/lib/storage"
 import { useLang } from "@/lib/lang-context"
 import HookAlternatives from "@/components/HookAlternatives"
+import PublishBtn from "@/components/PublishBtn"
 
 type TabKey = "post" | "thread" | "dump"
 
@@ -172,6 +173,7 @@ export default function ResultsPage() {
                 {savedPost ? tr.saved : tr.save}
               </button>
             </div>
+            <PublishBtn text={currentPostText + "\n\n" + posts.post.hashtags.map(h => `#${h}`).join(" ")} />
           </div>
         )}
 
@@ -215,6 +217,7 @@ export default function ResultsPage() {
                 {savedThread ? tr.saved : tr.save}
               </button>
             </div>
+            <PublishBtn text={posts.thread.tweets[0]} />
           </div>
         )}
 
@@ -251,6 +254,7 @@ export default function ResultsPage() {
                 {savedDump ? tr.saved : tr.save}
               </button>
             </div>
+            <PublishBtn text={posts.dump} />
           </div>
         )}
 

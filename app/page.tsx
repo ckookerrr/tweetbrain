@@ -6,6 +6,7 @@ import { Sparkles, AlertCircle } from "lucide-react"
 import VoiceRecorder from "@/components/VoiceRecorder"
 import PhotoUpload from "@/components/PhotoUpload"
 import StyleMemory from "@/components/StyleMemory"
+import TwitterConnect from "@/components/TwitterConnect"
 import type { GeneratedPosts } from "@/lib/types"
 import { saveDraft } from "@/lib/storage"
 import { useLang } from "@/lib/lang-context"
@@ -71,6 +72,7 @@ export default function Home() {
               style={lang === "en" ? { background: "#1d9bf0", color: "#fff" } : { color: "#71767b" }}
             >EN</button>
           </div>
+          <TwitterConnect onStyleLoaded={setUserStyle} />
           <StyleMemory onStyleChange={setUserStyle} />
         </div>
       </header>
