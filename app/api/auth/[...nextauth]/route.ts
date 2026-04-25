@@ -9,7 +9,7 @@ const handler = NextAuth({
       version: "2.0",
       authorization: {
         params: {
-          scope: "tweet.read tweet.write users.read offline.access",
+          scope: "tweet.read tweet.write users.read",
         },
       },
     }),
