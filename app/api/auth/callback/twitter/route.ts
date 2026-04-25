@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   try {
     const tok = await exchangeCode(code, verifier)
     const me = await fetchMe(tok.access_token)
-    const res = NextResponse.redirect(`${base}/`)
+    const res = NextResponse.redirect(`${base}/?auth=ok`)
     attachSessionCookie(res, {
       access_token: tok.access_token,
       refresh_token: tok.refresh_token,
