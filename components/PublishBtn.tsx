@@ -14,6 +14,7 @@ export default function PublishBtn({ text }: PublishBtnProps) {
   const { lang } = useLang()
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle")
   const [tweetId, setTweetId] = useState<string | null>(null)
+  const [errMsg, setErrMsg] = useState<string>("")
 
   if (!user) {
     return (
@@ -37,12 +38,16 @@ export default function PublishBtn({ text }: PublishBtnProps) {
         body: JSON.stringify({ text }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(JSON.stringify(data.error))
+      if (!res.ok) {
+        const detail = data?.error?.detail || data?.error?.title || JSON.stringify(data?.error) || `HTTP ${res.status}`
+        throw new Error(detail)
+      }
       setTweetId(data.id)
       setState("done")
-    } catch {
+    } catch (e) {
+      setErrMsg(e instanceof Error ? e.message : "unknown")
       setState("error")
-      setTimeout(() => setState("idle"), 3000)
+      setTimeout(() => { setState("idle"); setErrMsg("") }, 8000)
     }
   }
 
@@ -62,6 +67,7 @@ export default function PublishBtn({ text }: PublishBtnProps) {
   }
 
   return (
+    <div className="flex flex-col gap-2">
     <button
       onClick={publish}
       disabled={state === "loading"}
@@ -84,5 +90,9 @@ export default function PublishBtn({ text }: PublishBtnProps) {
         ? (lang === "ru" ? "Публикую…" : "Publishing…")
         : (lang === "ru" ? "Опубликовать в X" : "Post to X")}
     </button>
+    {state === "error" && errMsg && (
+      <p className="text-xs px-2" style={{ color: "#f4212e" }}>{errMsg}</p>
+    )}
+    </div>
   )
 }

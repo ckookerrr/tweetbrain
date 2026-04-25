@@ -97,7 +97,12 @@ export async function generatePosts(
     const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim()
 
     try {
-      return JSON.parse(cleaned) as GeneratedPosts
+      const parsed = JSON.parse(cleaned) as GeneratedPosts
+      // Strip leading # from hashtags so UI can add it consistently
+      const stripHash = (h: string) => h.replace(/^#+/, "").trim()
+      if (parsed.post?.hashtags) parsed.post.hashtags = parsed.post.hashtags.map(stripHash).filter(Boolean)
+      if (parsed.thread?.hashtags) parsed.thread.hashtags = parsed.thread.hashtags.map(stripHash).filter(Boolean)
+      return parsed
     } catch {
       throw new Error(`Failed to parse model response: ${text.slice(0, 300)}`)
     }
