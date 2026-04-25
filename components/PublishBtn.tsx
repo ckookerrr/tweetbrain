@@ -30,6 +30,14 @@ export default function PublishBtn({ text }: PublishBtnProps) {
   }
 
   const publish = async () => {
+    if (text.length > 280) {
+      setErrMsg(lang === "ru"
+        ? `Слишком длинно: ${text.length}/280. API X разрешает только до 280 символов (премиум для UI, не для API). Используй размер S или сократи хештеги.`
+        : `Too long: ${text.length}/280. X API only allows up to 280 chars (premium is for UI, not API). Use size S or remove hashtags.`)
+      setState("error")
+      setTimeout(() => { setState("idle"); setErrMsg("") }, 8000)
+      return
+    }
     setState("loading")
     try {
       const res = await fetch("/api/tweet", {
