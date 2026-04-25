@@ -1,4 +1,5 @@
 import { cookies } from "next/headers"
+import { NextResponse } from "next/server"
 import crypto from "crypto"
 
 const COOKIE_NAME = "tb_twitter"
@@ -27,9 +28,13 @@ export function generateState() {
   return base64url(crypto.randomBytes(16))
 }
 
-export function getRedirectUri() {
+export function getBaseUrl() {
   const base = process.env.NEXTAUTH_URL || "https://tweetbrain-production.up.railway.app"
-  return `${base.replace(/\/$/, "")}/api/auth/callback/twitter`
+  return base.replace(/\/$/, "")
+}
+
+export function getRedirectUri() {
+  return `${getBaseUrl()}/api/auth/callback/twitter`
 }
 
 export function getAuthorizeUrl(state: string, challenge: string) {
@@ -91,9 +96,18 @@ const COOKIE_OPTS = {
   path: "/",
 }
 
-export async function setSession(s: TwitterSession) {
-  const c = await cookies()
-  c.set(COOKIE_NAME, JSON.stringify(s), { ...COOKIE_OPTS, maxAge: 60 * 60 * 24 * 30 })
+export function attachSessionCookie(res: NextResponse, s: TwitterSession) {
+  res.cookies.set(COOKIE_NAME, JSON.stringify(s), { ...COOKIE_OPTS, maxAge: 60 * 60 * 24 * 30 })
+}
+
+export function attachPkceCookies(res: NextResponse, verifier: string, state: string) {
+  res.cookies.set(PKCE_COOKIE, verifier, { ...COOKIE_OPTS, maxAge: 600 })
+  res.cookies.set(STATE_COOKIE, state, { ...COOKIE_OPTS, maxAge: 600 })
+}
+
+export function clearPkceCookies(res: NextResponse) {
+  res.cookies.set(PKCE_COOKIE, "", { ...COOKIE_OPTS, maxAge: 0 })
+  res.cookies.set(STATE_COOKIE, "", { ...COOKIE_OPTS, maxAge: 0 })
 }
 
 export async function getSession(): Promise<TwitterSession | null> {
@@ -109,22 +123,14 @@ export async function getSession(): Promise<TwitterSession | null> {
   }
 }
 
-export async function clearSession() {
+export async function getPkceCookies() {
   const c = await cookies()
-  c.delete(COOKIE_NAME)
+  return {
+    verifier: c.get(PKCE_COOKIE)?.value,
+    state: c.get(STATE_COOKIE)?.value,
+  }
 }
 
-export async function setPkceCookie(verifier: string, state: string) {
-  const c = await cookies()
-  c.set(PKCE_COOKIE, verifier, { ...COOKIE_OPTS, maxAge: 600 })
-  c.set(STATE_COOKIE, state, { ...COOKIE_OPTS, maxAge: 600 })
-}
-
-export async function consumePkceCookie() {
-  const c = await cookies()
-  const verifier = c.get(PKCE_COOKIE)?.value
-  const state = c.get(STATE_COOKIE)?.value
-  c.delete(PKCE_COOKIE)
-  c.delete(STATE_COOKIE)
-  return { verifier, state }
+export function clearSessionCookie(res: NextResponse) {
+  res.cookies.set(COOKIE_NAME, "", { ...COOKIE_OPTS, maxAge: 0 })
 }

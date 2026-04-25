@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
-import { clearSession } from "@/lib/twitter-auth"
+import { clearSessionCookie } from "@/lib/twitter-auth"
 
 export async function POST() {
-  await clearSession()
-  return NextResponse.json({ ok: true })
+  const res = NextResponse.json({ ok: true })
+  clearSessionCookie(res)
+  return res
 }
