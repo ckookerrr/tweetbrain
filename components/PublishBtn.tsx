@@ -1,24 +1,24 @@
 "use client"
 
 import { useState } from "react"
-import { useSession, signIn } from "next-auth/react"
 import { Send, Check, Loader2 } from "lucide-react"
 import { useLang } from "@/lib/lang-context"
+import { useTwitter } from "@/lib/use-twitter"
 
 interface PublishBtnProps {
   text: string
 }
 
 export default function PublishBtn({ text }: PublishBtnProps) {
-  const { data: session } = useSession()
+  const { user, login } = useTwitter()
   const { lang } = useLang()
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle")
   const [tweetId, setTweetId] = useState<string | null>(null)
 
-  if (!session) {
+  if (!user) {
     return (
       <button
-        onClick={() => signIn("twitter")}
+        onClick={login}
         className="flex items-center justify-center gap-2 rounded-full py-2.5 px-5 text-sm font-bold border transition-all"
         style={{ borderColor: "#1d9bf0", color: "#1d9bf0" }}
       >

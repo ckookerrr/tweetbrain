@@ -3,7 +3,6 @@ import "./globals.css"
 import Nav from "@/components/Nav"
 import RegisterSW from "@/components/RegisterSW"
 import { LangProvider } from "@/lib/lang-context"
-import SessionProvider from "@/components/SessionProvider"
 
 export const metadata: Metadata = {
   title: "TweetBrain",
@@ -26,7 +25,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ru">
       <body style={{ background: "#000" }}>
-        <SessionProvider>
         <LangProvider>
           <main
             className="max-w-[600px] mx-auto pb-20"
@@ -37,7 +35,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Nav />
           <RegisterSW />
         </LangProvider>
-        </SessionProvider>
       </body>
     </html>
   )

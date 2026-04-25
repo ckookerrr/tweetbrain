@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
+import { getSession } from "@/lib/twitter-auth"
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession()
-
-  if (!session?.accessToken) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
-  }
+  const session = await getSession()
+  if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
 
   const { text } = await req.json()
   if (!text) return NextResponse.json({ error: "text required" }, { status: 400 })
@@ -14,7 +11,7 @@ export async function POST(req: NextRequest) {
   const res = await fetch("https://api.twitter.com/2/tweets", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${session.accessToken}`,
+      Authorization: `Bearer ${session.access_token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ text }),

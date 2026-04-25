@@ -1,26 +1,25 @@
 "use client"
 
-import { useSession, signIn, signOut } from "next-auth/react"
 import { useEffect, useState } from "react"
 import { LogOut, Check, Loader2 } from "lucide-react"
 import { useLang } from "@/lib/lang-context"
 import { saveUserStyle } from "@/lib/storage"
+import { useTwitter } from "@/lib/use-twitter"
 
 interface TwitterConnectProps {
   onStyleLoaded?: (style: string) => void
 }
 
 export default function TwitterConnect({ onStyleLoaded }: TwitterConnectProps) {
-  const { data: session, status } = useSession()
+  const { user, login, logout } = useTwitter()
   const { lang } = useLang()
   const [syncing, setSyncing] = useState(false)
   const [synced, setSynced] = useState(false)
 
   useEffect(() => {
-    if (session?.accessToken && !synced) {
-      syncStyle()
-    }
-  }, [session])
+    if (user && !synced) syncStyle()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   const syncStyle = async () => {
     setSyncing(true)
@@ -37,8 +36,7 @@ export default function TwitterConnect({ onStyleLoaded }: TwitterConnectProps) {
     }
   }
 
-  // Always show the button — even while loading
-  if (status === "authenticated" && session) {
+  if (user) {
     return (
       <div className="flex items-center gap-2">
         {syncing && (
@@ -54,7 +52,7 @@ export default function TwitterConnect({ onStyleLoaded }: TwitterConnectProps) {
           </span>
         )}
         <button
-          onClick={() => signOut()}
+          onClick={logout}
           className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs border"
           style={{ borderColor: "#2f3336", color: "#71767b" }}
         >
@@ -67,7 +65,7 @@ export default function TwitterConnect({ onStyleLoaded }: TwitterConnectProps) {
 
   return (
     <button
-      onClick={() => signIn("twitter")}
+      onClick={login}
       className="flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold border transition-all"
       style={{ borderColor: "#1d9bf0", color: "#1d9bf0", background: "transparent" }}
     >
