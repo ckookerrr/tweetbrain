@@ -52,6 +52,7 @@ export async function exchangeCode(code: string, verifier: string) {
     grant_type: "authorization_code",
     redirect_uri: getRedirectUri(),
     code_verifier: verifier,
+    client_id: process.env.TWITTER_CLIENT_ID!,
   })
   const res = await fetch("https://api.twitter.com/2/oauth2/token", {
     method: "POST",
