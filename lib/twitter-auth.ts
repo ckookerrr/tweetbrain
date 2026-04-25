@@ -51,13 +51,15 @@ export function getAuthorizeUrl(state: string, challenge: string) {
 }
 
 export async function exchangeCode(code: string, verifier: string) {
-  const basic = Buffer.from(`${process.env.TWITTER_CLIENT_ID}:${process.env.TWITTER_CLIENT_SECRET}`).toString("base64")
+  const cid = (process.env.TWITTER_CLIENT_ID ?? "").trim()
+  const csec = (process.env.TWITTER_CLIENT_SECRET ?? "").trim()
+  const basic = Buffer.from(`${cid}:${csec}`).toString("base64")
   const body = new URLSearchParams({
     code,
     grant_type: "authorization_code",
     redirect_uri: getRedirectUri(),
     code_verifier: verifier,
-    client_id: process.env.TWITTER_CLIENT_ID!,
+    client_id: cid,
   })
   const res = await fetch("https://api.twitter.com/2/oauth2/token", {
     method: "POST",
