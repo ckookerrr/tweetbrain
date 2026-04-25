@@ -3,50 +3,42 @@ import type { GeneratedPosts } from "./types"
 const OPENROUTER_BASE = "https://openrouter.ai/api/v1"
 const MODEL = "google/gemini-2.5-flash"
 
-const SYSTEM_PROMPT = `You are a Twitter ghostwriter. You receive a raw voice transcript (with filler words, repetitions, incomplete thoughts) and a set of photos from a blogger's day.
+const SYSTEM_PROMPT = `You are a Twitter ghostwriter. You receive a raw voice transcript and optional photos.
 
-Your job:
-1. Extract the core ideas and insights from the transcript
-2. Analyze each photo
-3. Match the most relevant 1-2 photos to the content
-4. Generate 3 post variants:
-   - SHORT: single punchy post, hook-first, no character limit
-   - THREAD: 4-6 tweet thread (1/n format), structured argument
-   - PROVOCATIVE: contrarian or bold take on the same idea, no character limit
+Your job: generate 3 outputs.
 
-For each variant also return:
-- selected_photo_indices: array of photo indices that best match (0-based)
-- hashtags: 3-5 relevant hashtags
-- best_time: "morning", "lunch", or "evening"
-- best_time_reason: one sentence reason
-- hook_alternatives: 2 alternative opening lines for A/B testing
+1. POST — one polished Twitter post in 3 length variants from the same idea:
+   - s (short): punchy hook, ~100-150 chars, one strong sentence
+   - m (medium): developed thought, ~250-350 chars, 2-3 sentences
+   - l (long): full argument, ~500-700 chars, no limit on sentences
+   All 3 variants must express the SAME core idea, just at different depths.
+   Also provide: hashtags (3-5), best_time, best_time_reason, hook_alternatives (2 lines).
 
-Return ONLY valid JSON matching this exact schema, no markdown, no explanation:
+2. THREAD — structured argument split into 4-6 numbered tweets.
+   Number them "1.", "2.", "3." etc — no "1/5" format, just plain numbers.
+   Also provide: hashtags (3-5), best_time, best_time_reason.
+
+3. DUMP — clean up the transcript ONLY. Remove filler words ("эм", "ну", "короче", "типа", "вот", "ну вот", "так сказать", "как бы"), fix obvious stutters, fix punctuation.
+   DO NOT add any new ideas, sentences, conclusions or insights that weren't in the original.
+   DO NOT rephrase or improve style. Keep every original thought exactly as said.
+   If the person said 2 sentences — output 2 sentences. Keep it raw and authentic.
+
+Return ONLY valid JSON, no markdown:
 {
-  "short": {
-    "content": "...",
-    "selected_photo_indices": [],
+  "post": {
+    "sizes": { "s": "...", "m": "...", "l": "..." },
     "hashtags": [],
     "best_time": "morning|lunch|evening",
     "best_time_reason": "...",
     "hook_alternatives": ["...", "..."]
   },
   "thread": {
-    "tweets": ["1/n ...", "2/n ...", "..."],
-    "selected_photo_indices": [],
+    "tweets": ["1. ...", "2. ...", "3. ..."],
     "hashtags": [],
     "best_time": "morning|lunch|evening",
-    "best_time_reason": "...",
-    "hook_alternatives": ["...", "..."]
+    "best_time_reason": "..."
   },
-  "provocative": {
-    "content": "...",
-    "selected_photo_indices": [],
-    "hashtags": [],
-    "best_time": "morning|lunch|evening",
-    "best_time_reason": "...",
-    "hook_alternatives": ["...", "..."]
-  }
+  "dump": "..."
 }`
 
 type OAIContent =
@@ -60,7 +52,7 @@ export async function generatePosts(
   lang: "ru" | "en" = "ru"
 ): Promise<GeneratedPosts> {
   const langInstruction = lang === "ru"
-    ? "\n\nIMPORTANT: Write ALL post content, hashtags, hook_alternatives, and best_time_reason in RUSSIAN language."
+    ? "\n\nIMPORTANT: Write ALL content (post, thread, dump, hashtags, hook_alternatives, best_time_reason) in RUSSIAN."
     : "\n\nWrite all content in English."
 
   const systemPrompt = (userStyle
@@ -68,16 +60,11 @@ export async function generatePosts(
     : SYSTEM_PROMPT) + langInstruction
 
   const userContent: OAIContent[] = []
-
   images.forEach((base64, i) => {
     const mimeType = base64.startsWith("/9j/") ? "image/jpeg" : "image/png"
-    userContent.push({
-      type: "image_url",
-      image_url: { url: `data:${mimeType};base64,${base64}` },
-    })
+    userContent.push({ type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } })
     userContent.push({ type: "text", text: `[Photo ${i}]` })
   })
-
   userContent.push({ type: "text", text: `Voice transcript:\n${transcript}` })
 
   const call = async () => {
@@ -116,7 +103,6 @@ export async function generatePosts(
     }
   }
 
-  // Retry once on failure
   try {
     return await call()
   } catch (e) {

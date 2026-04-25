@@ -47,14 +47,14 @@ export default function DraftsPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate" style={{ color: "#e7e9ea" }}>
-                    {draft.posts.short.content.slice(0, 80)}…
+                    {(draft.posts.post?.sizes?.m ?? draft.posts.dump ?? "").slice(0, 80)}…
                   </p>
                   <div className="flex items-center gap-2 mt-1">
                     <p className="text-xs" style={{ color: "#71767b" }}>
                       {formatDate(draft.timestamp, lang)}
                     </p>
                     <div className="flex gap-1">
-                      {draft.posts.short.hashtags.slice(0, 2).map((tag) => (
+                      {(draft.posts.post?.hashtags ?? []).slice(0, 2).map((tag) => (
                         <span key={tag} className="text-xs" style={{ color: "#1d9bf0" }}>#{tag}</span>
                       ))}
                     </div>

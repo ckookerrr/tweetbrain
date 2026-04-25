@@ -1,25 +1,26 @@
 export interface PostVariant {
-  content: string
-  selected_photo_indices: number[]
+  sizes: {
+    s: string   // короткий ~100-150 символов
+    m: string   // средний ~250-350 символов
+    l: string   // длинный ~500-700 символов
+  }
   hashtags: string[]
   best_time: string
   best_time_reason: string
   hook_alternatives: string[]
-}
-
-export interface GeneratedPosts {
-  short: PostVariant
-  thread: ThreadVariant
-  provocative: PostVariant
 }
 
 export interface ThreadVariant {
-  tweets: string[]
-  selected_photo_indices: number[]
+  tweets: string[]   // нумерация "1.", "2.", ...
   hashtags: string[]
   best_time: string
   best_time_reason: string
-  hook_alternatives: string[]
+}
+
+export interface GeneratedPosts {
+  post: PostVariant
+  thread: ThreadVariant
+  dump: string   // чистые мысли без добавлений
 }
 
 export interface DraftEntry {
@@ -33,7 +34,7 @@ export interface DraftEntry {
 export interface QueueEntry {
   id: string
   savedAt: number
-  type: "short" | "thread" | "provocative"
+  type: "post" | "thread" | "dump"
   content: string
   hashtags: string[]
   photoIndices: number[]
